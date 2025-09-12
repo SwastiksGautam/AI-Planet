@@ -18,7 +18,11 @@ const ChatInterface = () => {
 
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:8000/chat', { method: 'POST', body: formData });
+            // ✅ CHANGE IS HERE: Use environment variable for the API URL
+            const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+            const response = await fetch(`${API_URL}/chat`, { method: 'POST', body: formData });
+            // ✅ END OF CHANGE
+
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             setResponses(prev => [...prev, `LLM Response: ${data.response}`]);
