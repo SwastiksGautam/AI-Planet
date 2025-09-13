@@ -18,10 +18,9 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from operator import add as add_messages
 
-# Your custom database and client imports
-from db.vector_db import pinecone_index, openai_client
-# from db.local_db import init_db, store_conversation, get_recent_conversations, clear_conversations # TEMP: Disabled for Render
-
+# This is the correct version
+from backend.db.vector_db import pinecone_index, openai_client
+from backend.db.local_db import init_db, store_conversation, get_recent_conversations, clear_conversations
 # Define a constant for our Pinecone namespace
 PINECONE_NAMESPACE = "rag-namespace-1"
 
@@ -133,24 +132,12 @@ rag_agent = graph.compile()
 # --- 2. FASTAPI APPLICATION SETUP & ENDPOINTS ---
 
 app = FastAPI()
+origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-# ✅ UPDATED THIS BLOCK WITH YOUR LIVE FRONTEND URL
-origins = [
-    "https://ai-planet-y68i.onrender.com", # Your live frontend URL
-    "http://localhost:3000",              # For local development
-    "http://127.0.0.1:3000",            # Also for local development
-]
-app.add_middleware(
-    CORSMiddleware, 
-    allow_origins=origins, 
-    allow_credentials=True, 
-    allow_methods=["*"], 
-    allow_headers=["*"]
-)
-
-# @app.on_event("startup") # TEMP: Disabled for Render
-# def startup_event(): 
-#     init_db()
+@app.on_event("startup")
+def startup_event(): 
+    init_db()
 
 @app.get("/")
 def read_root(): 
@@ -167,8 +154,8 @@ async def chat(query: Optional[str] = Form(None), file: Optional[UploadFile] = F
             pinecone_index.delete(delete_all=True, namespace=PINECONE_NAMESPACE)
         
         # 2. Clear Chat History (keep memory intact)
-        # print("[♻️] Clearing conversation history...") # TEMP: Disabled for Render
-        # clear_conversations()
+        print("[♻️] Clearing conversation history...")
+        clear_conversations()
         
         reader = PdfReader(io.BytesIO(await file.read()))
         full_text = "".join(page.extract_text() for page in reader.pages if page.extract_text())
@@ -177,7 +164,7 @@ async def chat(query: Optional[str] = Form(None), file: Optional[UploadFile] = F
             response = openai_client.embeddings.create(input=chunks, model="text-embedding-3-small")
             vectors = [(f"{file.filename}-{i}", res.embedding, {"text": chunk}) for i, (res, chunk) in enumerate(zip(response.data, chunks))]
             pinecone_index.upsert(vectors=vectors, namespace=PINECONE_NAMESPACE)
-            # store_conversation(query="File Upload", context=full_text, response="Document ingested successfully.", file_uploaded=True) # TEMP: Disabled for Render
+            store_conversation(query="File Upload", context=full_text, response="Document ingested successfully.", file_uploaded=True)
             return {"response": f"New session started. Successfully indexed '{file.filename}'."}
         else:
             return {"response": f"No text extracted from '{file.filename}'."}
@@ -199,17 +186,15 @@ async def chat(query: Optional[str] = Form(None), file: Optional[UploadFile] = F
                 parts.append(f"and you were born in {user_memory['birthplace']}")
             
             final_answer = ", ".join(parts) + "." if parts else "I don't have that information yet."
-            # store_conversation(query=query, context="", response=final_answer, file_uploaded=False) # TEMP: Disabled for Render
+            store_conversation(query=query, context="", response=final_answer, file_uploaded=False)
             return {"response": final_answer}
         
         # Normal RAG query
-        # history = get_recent_conversations(limit=5) # TEMP: Disabled for Render
-        history = [] # Use an empty history for now
+        history = get_recent_conversations(limit=5)
         history.append(HumanMessage(content=query))
         result = rag_agent.invoke({"messages": history})
         final_answer = result['messages'][-1].content
-        # store_conversation(query=query, context="", response=final_answer, file_uploaded=False) # TEMP: Disabled for Render
+        store_conversation(query=query, context="", response=final_answer, file_uploaded=False)
         return {"response": final_answer}
         
     return {"response": "Please provide a query or a file."}
-
