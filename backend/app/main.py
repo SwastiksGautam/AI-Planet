@@ -198,4 +198,6 @@ async def chat(query: Optional[str] = Form(None), file: Optional[UploadFile] = F
         return {"response": final_answer}
         
     return {"response": "Please provide a query or a file."}
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/", StaticFiles(directory=r"C:\Users\HP\Documents\AI Planet\backend\build", html=True), name="static")
