@@ -1,0 +1,38 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      # Use a modern, stable Python and Node.js version
+      python: 3.11
+      nodejs: 18
+    commands:
+      - echo "Installing backend Python dependencies..."
+      - pip install -r requirements.txt
+
+  pre_build:
+    commands:
+      - echo "Navigating to frontend directory..."
+      - cd frontend
+      - echo "Installing frontend dependencies..."
+      # This assumes you are using npm. If you use yarn, change this to 'yarn install'
+      - npm install
+      - echo "Building the frontend application..."
+      # This assumes your build script is named 'build' in your package.json
+      - npm run build
+      - echo "Returning to the root directory..."
+      - cd ..
+
+  build:
+    commands:
+      - echo "Build phase started. Copying frontend build into backend..."
+      # This crucial step moves your compiled frontend into a folder
+      # inside your backend directory, so your server can serve it.
+      - cp -r frontend/build backend/static
+
+artifacts:
+  # This section defines the final output that gets sent to Elastic Beanstalk.
+  # We are telling CodeBuild to go into the 'backend' folder and zip up everything inside it.
+  base-directory: backend
+  files:
+    - '**/*'

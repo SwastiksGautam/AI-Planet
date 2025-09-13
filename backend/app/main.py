@@ -2,7 +2,7 @@ import os
 import io
 import re
 from typing import Optional, TypedDict, Annotated, Sequence
-
+from fastapi.staticfiles import StaticFiles
 # FastAPI and Pydantic Imports
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -198,3 +198,4 @@ async def chat(query: Optional[str] = Form(None), file: Optional[UploadFile] = F
         return {"response": final_answer}
         
     return {"response": "Please provide a query or a file."}
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
