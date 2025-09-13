@@ -133,8 +133,20 @@ rag_agent = graph.compile()
 # --- 2. FASTAPI APPLICATION SETUP & ENDPOINTS ---
 
 app = FastAPI()
-origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+# ✅ UPDATED THIS BLOCK WITH YOUR LIVE FRONTEND URL
+origins = [
+    "https://ai-planet-y68i.onrender.com", # Your live frontend URL
+    "http://localhost:3000",              # For local development
+    "http://127.0.0.1:3000",            # Also for local development
+]
+app.add_middleware(
+    CORSMiddleware, 
+    allow_origins=origins, 
+    allow_credentials=True, 
+    allow_methods=["*"], 
+    allow_headers=["*"]
+)
 
 @app.on_event("startup")
 def startup_event(): 
@@ -199,3 +211,4 @@ async def chat(query: Optional[str] = Form(None), file: Optional[UploadFile] = F
         return {"response": final_answer}
         
     return {"response": "Please provide a query or a file."}
+
