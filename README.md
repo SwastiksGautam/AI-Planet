@@ -1,64 +1,173 @@
-Interactive AI Agent for Retrieval-Augmented Generation (RAG)
-This project is an initial prototype for a no-code/low-code web application that demonstrates key functionalities of a Retrieval-Augmented Generation (RAG) system. It's designed as a session-based environment where each new file upload creates a clean slate for both the knowledge base and conversation history.
+# 🤖 Interactive AI Agent for Retrieval-Augmented Generation (RAG)
 
-🌟 Features
-Two-Way Interaction: Upload a PDF document and then query its content using an interactive chat interface.
+## 🚧 Project Status
+Initial Prototype for a Full-Stack Engineering Assignment.
 
-Session-Based Architecture: The system resets its knowledge base and conversation history with each new file upload, ensuring a clean slate for every session.
+This project demonstrates a **session-based RAG system prototype** where each new PDF upload creates a clean slate for the knowledge base and conversation history. It serves as a foundation for a no-code/low-code web application, allowing interactive querying of document content via a chat interface.
 
-Automated Workflow: The backend uses a fixed LangGraph agent to orchestrate the RAG workflow, which is visualized on the frontend.
+---
 
-Visual Workflow Canvas: The frontend uses React Flow to visually display the RAG workflow, providing an intuitive understanding of the system's logic.
+## 🎯 Key Features
 
-⚙️ Technical Stack
-Frontend: React (Single Page Application)
+### ✅ File Upload & Session Management
+- Upload a PDF document.
+- Automatically resets knowledge base and chat history for each new session.
 
-Backend: FastAPI (Python)
+### ✅ Retrieval-Augmented Generation (RAG)
+- Interactive chat interface where users can ask questions about the uploaded document.
+- Uses vector embeddings and OpenAI LLM to retrieve and synthesize accurate answers.
 
-AI/LLM: OpenAI API
+### ✅ Visual Workflow
+- React Flow-based visualization of the agent's internal logic.
+- "Custom Mode" allows graphical manipulation of nodes (purely visual in this prototype).
 
-Vector Store: Pinecone (Prototype)
+---
 
-Database: SQLite (Local & Temporary)
+## ⚙️ High-Level Design (HLD)
 
-🏗️ High-Level Design
-The application follows a standard client-server architecture with three main layers:
+### System Architecture
+- **Frontend (Client)**  
+  Built with React SPA for user interactions and state management.
 
-Client (Frontend): A React-based SPA for all user interactions, file uploads, and displaying chat history.
+- **Backend (Server)**  
+  FastAPI-based Python API handling:
+    - PDF file processing.
+    - Vector embeddings generation (OpenAI API).
+    - RAG logic orchestration.
 
-Server (Backend): A FastAPI server that processes files, manages the vector database, and orchestrates the AI agent.
+- **External Services**  
+  - OpenAI API for LLM functionality.
+  - Vector store (initially Pinecone, moving toward in-memory).
+  - Local SQLite database for session conversation history.
 
-External Services: Services like OpenAI and Pinecone that the backend interacts with.
+### Data Flows
 
-Key Data Flows
-Flow 1: New Session via File Upload
+#### 📄 New Session via File Upload
+1. User uploads a PDF file.
+2. File sent to backend `/chat` endpoint.
+3. Backend resets old knowledge base and conversation history.
+4. PDF is processed → Text extraction → Chunking → Vector embeddings generated.
+5. Vectors stored in the vector store (in-memory or Pinecone).
+6. Success message returned to frontend.
 
-The user uploads a PDF.
+#### 💬 Querying a Question
+1. User types a question.
+2. Backend invokes LangGraph Agent → OpenAI LLM call.
+3. If external knowledge needed → `rag_retriever_tool` invoked.
+4. Query embedded → Vector DB searched → Relevant text retrieved.
+5. Context passed back to LLM → Final synthesized answer.
+6. Answer sent to frontend.
 
-The backend processes the PDF, extracts text, and creates vector embeddings using the OpenAI API.
+---
 
-The embeddings are stored in the vector database.
+## ⚙️ Low-Level Design (LLD)
 
-A success message is returned to the frontend.
+### Backend Components
+- **`main.py`**  
+  Central FastAPI application managing `/chat` endpoint, orchestrating file upload and queries.
 
-Flow 2: Answering a Question (RAG)
+- **`local_db.py` (SQLite)**  
+  Handles temporary storage of conversation history.
 
-The user sends a query to the backend.
+- **`vector_db.py` (Pinecone / In-memory)**  
+  Manages the document knowledge base, generates embeddings, and performs similarity searches.
 
-The backend's LangGraph agent calls the rag_retriever_tool.
+- **LangGraph Agent**  
+  Hardcoded workflow for AI query processing (to be made dynamic later).
 
-The tool performs a similarity search on the vector database to retrieve the most relevant text chunks from the uploaded PDF.
+### Frontend Components
+- **`App.js`**  
+  Manages application state and toggles between modes.
 
-The retrieved text is sent to the LLM as context to generate a final answer.
+- **`ChatInterface.js`**  
+  Handles user interactions: file uploads, question inputs, and chat history.
 
-The final answer is sent to the frontend for display.
+- **`WorkflowCanvas.js`**  
+  Visualizes agent logic graph using React Flow. Custom Mode allows visual edits.
 
-🚀 Setup and Installation
-Prerequisites
-Python 3.8+
+---
 
-Node.js & npm
+## ⚡ Design Decisions & Deployment Analysis
 
-An OpenAI API Key
+### Why In-Memory Vector DB?
+- Avoids free-tier resource limits (e.g., Render).
+- Simplifies deployment without external dependencies.
+  
+**Pros**:
+- Stability on free services.
+- Fast prototyping.
 
-A Pinecone API Key
+**Cons**:
+- Knowledge is lost after restart.
+- Limited scalability.
+
+---
+
+## 🚀 Roadmap for Full Assignment Compliance
+
+### 1️⃣ Backend Refactoring
+- New API: `POST /build_stack` to accept dynamic workflow graph (nodes + edges).
+- Dynamic workflow parser.
+- Integration of SerpAPI or similar web search tool.
+
+### 2️⃣ Tech Stack Migration
+- Migrate from SQLite → PostgreSQL for persistent storage.
+- Migrate from Pinecone → ChromaDB.
+
+### 3️⃣ Deployment Strategy
+- Create Dockerfile for frontend & backend.
+- Implement `docker-compose.yml` to launch:
+    - Backend API
+    - Frontend UI
+    - PostgreSQL
+    - ChromaDB
+
+---
+
+## 🚀 Setup & Installation
+
+### Prerequisites
+- Python 3.8+
+- OpenAI API Key
+- Node.js and npm (for frontend)
+- Docker (for future deployment)
+
+### Installation
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/your-username/rag-interactive-agent.git
+    cd rag-interactive-agent
+    ```
+
+2. Backend Setup:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate      # Linux/macOS
+    venv\Scripts\activate         # Windows
+    pip install -r requirements.txt
+    ```
+
+3. Configure Environment:
+    ```bash
+    export OPENAI_API_KEY="your-openai-api-key"
+    ```
+
+4. Run Backend Server:
+    ```bash
+    uvicorn main:app --reload
+    ```
+
+5. Start Frontend:
+    ```bash
+    cd frontend
+    npm install
+    npm start
+    ```
+
+---
+
+## 📚 Future Enhancements
+- Fully dynamic workflow engine.
+- Persistent storage for conversations and workflows.
+- Scalable, multi-user support.
+
